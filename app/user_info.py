@@ -40,21 +40,30 @@ def filter_unplayed(game_data):
             unplayed_games.append(i['appid'])
     return unplayed_games
 
-def traverse_friend_graph(steam_id,visited=set(),depth=0):
-	if depth > 1:
-		print('Recursion depth reached')
-		return visited
-	visited.add(steam_id)
-	pp = pprint.PrettyPrinter(indent=4)
-	f_api = _steam_endpoint('ISteamUser/GetFriendList/v0001', steamid=steam_id, relationship='friend')
-	friends = requests.get(f_api).json()
-	for i in friends['friendslist']['friends']:
-		if i['steamid'] in visited:
-			continue
-		try:
-			visited |= traverse_friend_graph(i['steamid'],visited,depth=depth+1)
-		except KeyError:
-			print("no friend scrub",steam_id)
-			print(i)
-	print(visited)
-	return visited
+
+def traverse_friend_graph(steam_id, cap=250, maxdepth=4, visited=set(), depth=0):
+    """Get a recursive list of connections up to a certain depth and number"""
+
+    def get_friends(steam_id):
+        """Get a list of friends for a steam user"""
+        url = _steam_endpoint('ISteamUser/GetFriendList/v0001',
+                              steamid=steam_id, relationship='friend')
+        friends = requests.get(url).json()
+        try:
+            return friends['friendslist']['friends']
+        except KeyError:
+            return []
+
+    if len(visited) >= cap or depth >= maxdepth:
+        return visited
+
+    visited.add(steam_id)
+    for i in get_friends(steam_id):
+        if i['steamid'] in visited:
+            continue
+
+        visited |= traverse_friend_graph(i['steamid'], cap=cap, maxdepth=maxdepth,
+                                         visited=visited, depth=depth+1)
+
+
+    return visited
