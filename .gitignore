@@ -96,4 +96,7 @@ ENV/
 /site
 
 # mypy
-.mypy_cache//config.py
+.mypy_cache/
+
+# config
+/config.py
