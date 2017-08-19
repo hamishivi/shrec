@@ -6,9 +6,9 @@ def main():
 
     sc = SparkContext()
     # Load and parse the data
-    data = sc.textFile("test.data")
+    data = sc.textFile("training_data")
     ratings = data.map(lambda l: l.split(','))\
-    .map(lambda l: Rating(int(l[0]), int(l[1]), float(l[2])))
+    .map(lambda l: Rating(int_hash(int(l[0])), int(l[1]), int(l[2])))
 
     # Build the recommendation model using Alternating Least Squares
     rank = 10
@@ -25,7 +25,10 @@ def main():
     # Save and load modeil
     # model.save(sc, "CF.model")
     # model = MatrixFactorizationModel.load(sc, "CF.model")
-    user_recs = model.recommendProducts(1, 10)
+    user_recs = model.recommendProducts(int_hash(76561198067457280), 10)
     pp(user_recs)
+
+def int_hash(s):
+    return hash(s) % 2147483647
 
 main()
