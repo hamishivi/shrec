@@ -1,8 +1,14 @@
 import re
 from flask import render_template, g, flash, redirect, session
 from app import app, oid, user_info, game_info
+from random import random
+import os
 
 _steam_id_re = re.compile('steamcommunity.com/openid/id/(.*?)$')
+
+@app.before_request
+def before_request():
+   g.shrek = get_random_shrek()
 
 @app.route('/')
 def index():
@@ -38,3 +44,9 @@ def logout():
     session.pop('openid', None)
     session.pop('games', None)
     return redirect(oid.get_next_url())
+
+def get_random_shrek():
+    num = int(random()*len(os.listdir('./app/shreks')))
+    filename = os.listdir('./app/shreks')[num]
+    file = open('./app/shreks/' + filename)
+    return file.read()
