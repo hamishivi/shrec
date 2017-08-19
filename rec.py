@@ -7,9 +7,8 @@ try:
     model = MatrixFactorizationModel.load(sc, "CF.model")
 except Excetion:
     model = None
-
 def main():
-    data = load_file("test.data")
+    data = load_file("training_data")
     model = train(data)
     # Evaluate the model on training data
     '''
@@ -19,7 +18,7 @@ def main():
     MSE = ratesAndPreds.map(lambda r: (r[1][0] - r[1][1])**2).mean()
     print("Mean Squared Error = " + str(MSE))
     '''
-    pp(get_rec(1))
+    pp(get_rec(int_hash(76561198067457280)))
 
 def train(data):
     '''
@@ -31,6 +30,7 @@ def train(data):
     numIterations = 10
     model = ALS.train(data, rank, numIterations)
     # model.save(sc, "CF.model")
+
     return model
 
 def get_rec(user, num_rec=10):
@@ -39,6 +39,9 @@ def get_rec(user, num_rec=10):
 
 def load_file(filename):
     global sc
-    return sc.textFile(filename).map(lambda l: l.split(',')).map(lambda l: Rating(int(l[0]), int(l[1]), float(l[2])))
+    return sc.textFile(filename).map(lambda l: l.split(',')).map(lambda l: Rating(int_hash(int(l[0])), int(l[1]), float(l[2])))
+
+def int_hash(s):
+    return hash(s) % 2147483647
 
 main()
