@@ -4,9 +4,10 @@ from pyspark import RDD
 
 from pprint import pprint as pp
 
-
 sc = SparkContext()
 sc.setLocalProperty('spark.ui.enabled', 'false')
+sc.setLogLevel('ERROR')
+
 try:
     model = MatrixFactorizationModel.load(sc, "CF.model")
 except Exception:
