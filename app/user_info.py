@@ -16,14 +16,15 @@ def _steam_endpoint(endpoint, apikey=app.config['STEAM_API_KEY'], **params):
     if paramstring:
         url.append("?" + paramstring)
 
-    return urljoin(*url)
+    return request.get(urljoin(*url))
+
 
 def get_user_data(steam_id):
     '''
     Create a csv file called training_data with the format: (steamid,gameid,play_time)
     '''
-    url = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
-    game_data = requests.get(url).json()
+    req = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
+    game_data = req.json()
     played = filter_unplayed(game_data)
     if played is None:
         return
@@ -33,9 +34,10 @@ def get_user_data(steam_id):
         for i in game_data['response']['games']:
             writer.writerow([steam_id, i['appid'], i['playtime_forever']])
 
+
 def get_unplayed_games(steam_id):
-    url = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
-    game_data = requests.get(url).json()
+    req = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
+    game_data = req.json()
     return filter_unplayed(game_data)
 
 def filter_unplayed(game_data):
@@ -57,9 +59,9 @@ def traverse_friend_graph(steam_id, cap=50, maxdepth=4, visited=set(), depth=0):
 
     def get_friends(steam_id):
         """Get a list of friends for a steam user"""
-        url = _steam_endpoint('ISteamUser/GetFriendList/v0001',
+        req = _steam_endpoint('ISteamUser/GetFriendList/v0001',
                               steamid=steam_id, relationship='friend')
-        friends = requests.get(url).json()
+        friends = req.json()
         try:
             return friends['friendslist']['friends']
         except KeyError:
