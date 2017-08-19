@@ -3,6 +3,7 @@ from flask import render_template, g, flash, redirect, session
 from app import app, oid, user_info, game_info, rec
 from random import random
 import os
+import shutil
 
 _steam_id_re = re.compile('steamcommunity.com/openid/id/(.*?)$')
 
@@ -47,6 +48,7 @@ def after_login(resp):
     friend_set = user_info.traverse_friend_graph(g.user)
     for i in friend_set:
         user_info.get_user_data(i)
+    shutil.rmtree('CF.model')
     print('training data')
     data = rec.load_file('./training_data')
     rec.train(data)
