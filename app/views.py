@@ -21,16 +21,40 @@ def before_request():
 
 @app.route('/')
 def index():
-    game_infos = []
     print(session)
-    if 'games' in session and session['games'] is not None:
-        for id in session['games']:
-            game_infos.append(game_info.get_game_info(id))
-    if len(game_infos) == 0:
-        return render_template('index.html')
-    else:
-        print(game_infos)
+    print('user' in g)
+    if 'user' in session and session['user'] is not None:
+        unplayed_games = user_info.get_unplayed_games(session['user'])
+        recs = rec.get_rec(int(session['user']), 10000)
+        print(recs)
+        if recs is None and 'naive' not in session:
+            session['naive'] = True
+            recs = user_info.get_naive_recs(int(session['user']))
+            games = recs
+        elif 'naive' in session and recs is None:
+           session.pop('naive', None)
+           u_info = user_info.get_user_data(session['user'])
+           friend_set = user_info.traverse_friend_graph(session['user'])
+           for i in friend_set:
+                user_info.get_user_data(i)
+           print('training data')
+           data = rec.load_file('./training_data')
+           rec.train(data)
+           print('done!')
+           recs = rec.get_rec(int(g.user), 10000)
+           games = [r.product for r in recs if r.product in unplayed_games]
+        else:
+           games = [r.product for r in recs if r.product in unplayed_games]
+        # need to filter for games in library
+        #unplayed_games =  user_info.get_unplayed_games(session['user'])
+        #games = [r.product for r in recs if r.product in unplayed_games]
+        games = games[:12]
+        game_infos = [game_info.get_game_info(id) for id in games]
         return render_template('index.html', games=game_infos)
+    else:
+        session.pop('naive', None)
+        return render_template('index.html')
+
 
 @app.route('/login')
 @oid.loginhandler
@@ -42,29 +66,22 @@ def login():
 
 @oid.after_login
 def after_login(resp):
-    g.user = _steam_id_re.search(resp.identity_url).group(1)
-    flash(f'User id is {g.user}')
-    # just some test games for now
-    recs = rec.get_rec(int(g.user), 100)
-    if recs is None:
-        u_info = user_info.get_user_data(g.user)
-        friend_set = user_info.traverse_friend_graph(g.user)
-        for i in friend_set:
-            user_info.get_user_data(i)
-        print('training data')
-        data = rec.load_file('./training_data')
-        rec.train(data)
-        print('done!')
-    # need to filter for games in library
-    unplayed_games =  user_info.get_unplayed_games(g.user)
-    games = [r.product for r in recs if r.product in unplayed_games]
-    session['games'] = games[:12]
-    return render_template('loading.html')
+    print(resp.identity_url)
+    session['user'] = _steam_id_re.search(resp.identity_url).group(1)
+    print(session['user'])
+    g.user = session['user']
+    flash("Here's some basic reccomendations while we load better ones!")
+    return redirect('/')
+
+@app.route('/naive_landing')
+def naive_landing():
+   return redirect
 
 @app.route('/logout')
 def logout():
     session.pop('openid', None)
     session.pop('games', None)
+    session.pop('user', None)
     return redirect(oid.get_next_url())
 
 def get_random_shrek():

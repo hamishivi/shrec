@@ -7,6 +7,8 @@ from app import app
 def _steam_endpoint(endpoint, apikey=app.config['STEAM_API_KEY'], **params):
     '''
     Return a formatted endpoint URL from the Steam API
+
+    Warning: Will fail if no parameters are included in the endpoint
     '''
     url = [urljoin("http://api.steampowered.com/", endpoint)]
 
@@ -17,6 +19,45 @@ def _steam_endpoint(endpoint, apikey=app.config['STEAM_API_KEY'], **params):
         url.append("?" + paramstring)
 
     return requests.get(urljoin(*url))
+
+
+def get_naive_recs(steam_id, maxrec=5):
+    '''
+    Get recomendations using a naive non-machine-learning approach
+    '''
+
+    def get_game_data(appid):
+        BASE_URL = "http://store.steampowered.com/api/"
+        return requests.get(urljoin(BASE_URL, f"appdetails?appids={appid}"))
+
+    def get_genres(game):
+        return get_game_data(game['appid']).json()[str(game['appid'])]['data']['genres']
+
+
+    user_data = get_user_data_raw(steam_id)['response']
+    games = user_data['games']
+    games.sort(key=lambda x: x['playtime_forever'], reverse=True)
+
+    games_played = [i for i in games if i['playtime_forever'] > 0]
+    games_unplayed = [i for i in games if i['playtime_forever'] == 0]
+    games_top = [games[i] for i in range(min(maxrec, len(games_played)))]
+
+    from pprint import pprint
+
+    genres_top = set()
+    for game in games_top:
+        genres_top |= set(genre["id"] for genre in get_genres(game))
+
+    recs = []
+    for game in games_unplayed:
+        genres = set(genre['id'] for genre in get_genres(game))
+        if len(recs) > 5:
+            break
+
+        if genres_top & genres:
+            recs.append(game['appid'])
+
+    return recs
 
 
 def get_user_data_raw(steam_id):
