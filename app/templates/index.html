@@ -1,3 +1,74 @@
-<title>shrec.me</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!--
+Hey, nice work on inspecting this web page.
+                      _____
+                   ,-'     `._
+                 ,'           `.        ,-.
+               ,'               \       ),.\
+     ,.       /                  \     /(  \;
+    /'\\     ,o.        ,ooooo.   \  ,'  `-')
+    )) )`. d8P"Y8.    ,8P"""""Y8.  `'  .--"'
+   (`-'   `Y'  `Y8    dP       `'     /
+    `----.(   __ `    ,' ,---.       (
+           ),--.`.   (  ;,---.        )
+          / \O_,' )   \  \O_,'        |
+         ;  `-- ,'       `---'        |
+         |    -'         `.           |
+        _;    ,            )          :
+     _.'|     `.:._   ,.::" `..       |
+  --'   |   .'     """         `      |`.
+        |  :;      :   :     _.       |`.`.-'--.
+        |  ' .     :   :__.,'|/       |  \
+        `     \--.__.-'|_|_|-/        /   )
+         \     \_   `--^"__,'        ,    |
+   -hrr- ;  `    `--^---'          ,'     |
+          \  `                    /      /
+           \   `    _ _          /
+            \           `       /
+             \           '    ,'
+              `.       ,   _,'
+                `-.___.---'
 
-<h1>get shreccommended</h1>
+
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SHRec- Steaming Hot Recommendations</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+</head>
+<body class="bg-dark text-white text-center">
+    <div class="container">
+    {# if not identified #}
+    <h1>Shrec.me</h1>
+    <h2 class="text-success">get shreccommended<h2>
+    <p>Give us your steam details and we will give you some nice recommendations
+        from your backlog!</p>
+    <form action="/steamdata">
+      <div class="form-group">
+        <label for="steamid">Steam Account</label>
+        <input type="text" class="form-control" id="steamuser" aria-describedby="emailHelp" placeholder="Enter steam username">
+        <input type="text" class="form-control" id="steampassword" aria-describedby="passwordHelp" placeholder="Enter steam password">
+      </div>
+      <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+    {# else #}
+    <br><br>
+    <ul>
+        {# for game in games #}
+        <div class="card text-white bg-success mb-3">
+            <img class="card-img-top" src="..." alt="Some Video Game Image">
+            <div class="card-body">
+                <h4 class="card-title">Game Title</h4>
+                <p class="card-text">Description of why you should play this game!</p>
+            </div>
+        </div>
+        {# endfor #}
+    </ul>
+    {# endif #}
+</div>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+</body>
+</html>
