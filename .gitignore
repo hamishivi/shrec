@@ -1,3 +1,6 @@
+# model file
+CF.model/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -100,3 +103,4 @@ ENV/
 
 # config
 /config.py
+training_data
