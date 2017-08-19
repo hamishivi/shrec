@@ -16,15 +16,19 @@ def _steam_endpoint(endpoint, apikey=app.config['STEAM_API_KEY'], **params):
     if paramstring:
         url.append("?" + paramstring)
 
-    return request.get(urljoin(*url))
+    return requests.get(urljoin(*url))
+
+
+def get_user_data_raw(steam_id):
+    req = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
+    return req.json()
 
 
 def get_user_data(steam_id):
     '''
     Create a csv file called training_data with the format: (steamid,gameid,play_time)
     '''
-    req = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
-    game_data = req.json()
+    game_data = get_user_data_raw(steam_id)
     played = filter_unplayed(game_data)
     if played is None:
         return
