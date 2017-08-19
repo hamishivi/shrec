@@ -9,7 +9,7 @@ from pprint import pprint as pp
 sc = SparkContext()
 try:
     model = MatrixFactorizationModel.load(sc, "CF.model")
-except Excetion:
+except Exception:
     model = None
 
 def main():
@@ -25,7 +25,6 @@ def main():
     '''
     pp(data)
     pp(get_rec(int_hash(76561198067457280)))
-    pp(get_rec(1, 1))
 
 def train(data):
     '''
@@ -52,7 +51,7 @@ def format_data(data_list):
     data_list contains (user, game, playtime) tuples
     '''
     global sc
-    return sc.parallelize(data_list).map(lambda r: Rating(int_hash(r[0], r[1], r[2]))
+    return sc.parallelize(data_list).map(lambda r: Rating(int_hash(r[0]), int(r[1]), int(r[2])))
 
 def int_hash(s):
     return hash(s) % 2147483647
