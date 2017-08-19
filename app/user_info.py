@@ -30,6 +30,11 @@ def get_user_data(steam_id):
         for i in game_data['response']['games']:
             writer.writerow([steam_id, i['appid'], i['playtime_forever']])
 
+def get_unplayed_games(steam_id):
+    url = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
+    game_data = requests.get(url).json()
+    return filter_unplayed(game_data)
+
 def filter_unplayed(game_data):
     '''
     Filter out unplayed games from the data set
