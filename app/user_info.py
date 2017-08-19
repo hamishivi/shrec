@@ -24,7 +24,10 @@ def get_user_data(steam_id):
     '''
     url = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
     game_data = requests.get(url).json()
-    print(len(filter_unplayed(game_data)))
+    played = filter_unplayed(game_data)
+    if played is None:
+        return
+    print(len(played))
     with open('training_data','a') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for i in game_data['response']['games']:
@@ -40,13 +43,16 @@ def filter_unplayed(game_data):
     Filter out unplayed games from the data set
     '''
     unplayed_games = []
-    for i in game_data['response']['games']:
-        if i['playtime_forever'] == 0:
-            unplayed_games.append(i['appid'])
-    return unplayed_games
+    try:
+        for i in game_data['response']['games']:
+            if i['playtime_forever'] == 0:
+                unplayed_games.append(i['appid'])
+        return unplayed_games
+    except KeyError:
+        pass
 
 
-def traverse_friend_graph(steam_id, cap=250, maxdepth=4, visited=set(), depth=0):
+def traverse_friend_graph(steam_id, cap=50, maxdepth=4, visited=set(), depth=0):
     """Get a recursive list of connections up to a certain depth and number"""
 
     def get_friends(steam_id):
