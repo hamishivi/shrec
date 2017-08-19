@@ -39,6 +39,15 @@ Hey, nice work on inspecting this web page.
 </head>
 <body class="bg-dark text-white text-center">
     <div class="container">
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
     {# if not identified #}
     <h1>Shrec.me</h1>
     <h2 class="text-success">get shreccommended<h2>
