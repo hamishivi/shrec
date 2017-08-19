@@ -59,15 +59,17 @@ Hey, nice work on inspecting this web page.
     {# else #}
     <br><br>
     <ul>
-        {# for game in games #}
-        <div class="card text-white bg-success mb-3">
-            <img class="card-img-top" src="..." alt="Some Video Game Image">
+        {% if games %}
+        {% for game in games %}
+        <div class="card text-white bg-success mb-3" style="width: 45%; float:left; margin: 10px">
+            <img class="card-img-top img-thumbnail" src="{{ game[3] }}" alt="Some Video Game Image" width="20">
             <div class="card-body">
-                <h4 class="card-title">Game Title</h4>
-                <p class="card-text">Description of why you should play this game!</p>
+                <h4 class="card-title"><a href="steam://rungameid/{{ game[1] }}">{{ game[0] }}</a></h4>
+                <p class="card-text">{{ game[2] }}</p>
             </div>
         </div>
-        {# endfor #}
+        {% endfor %}
+        {% endif %}
     </ul>
     {# endif #}
 </div>

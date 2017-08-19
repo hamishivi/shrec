@@ -10,7 +10,6 @@ def get_user_data(steam_id):
     g_api = 'http://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=' + app.config['STEAM_API_KEY'] + '&steamid=' + str(steam_id) + '&format=json'
     output = []
     game_data = requests.get(g_api).json()
-    print(len(filter_unplayed(game_data)))
     with open('training_data','w') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for i in game_data['response']['games']:
