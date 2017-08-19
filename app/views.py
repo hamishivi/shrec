@@ -1,7 +1,6 @@
 import re
 from flask import render_template, g, flash, redirect
 from app import app, oid
-from app.userinfo import get_userinfo
 
 _steam_id_re = re.compile('steamcommunity.com/openid/id/(.*?)$')
 
@@ -14,7 +13,7 @@ def index():
 def login():
     if 'user' in g and g.user is not None:
         return redirect(oid.get_next_url())
-    return oid.try_login('http://steamcommunity.com/openid')
+    return oid.try_login(app.config['STEAM_API_URL'])
 
 
 @oid.after_login
