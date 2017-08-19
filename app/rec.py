@@ -1,3 +1,6 @@
+import os.path
+from shutil import rmtree
+from py4j.protocol import Py4JJavaError
 from pyspark.mllib.recommendation import ALS, MatrixFactorizationModel, Rating
 from pyspark import SparkContext
 from pyspark import RDD
@@ -34,6 +37,8 @@ def train(data):
     rank = 10
     numIterations = 10
     model = ALS.trainImplicit(data, rank, numIterations)
+    if os.path.exists("CF.model"):
+        shutil.rmtree("CF.model")
     model.save(sc, "CF.model")
 
     return model
@@ -41,7 +46,10 @@ def train(data):
 def get_rec(user, num_rec=10):
     global model
     user_hash = int_hash(user)
-    return model.recommendProducts(user_hash, num_rec)
+    try:
+        return model.recommendProducts(user_hash, num_rec)
+    except Py4JJavaError:
+        return None
 
 def load_file(filename):
     global sc

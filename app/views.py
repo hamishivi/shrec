@@ -43,16 +43,17 @@ def login():
 def after_login(resp):
     g.user = _steam_id_re.search(resp.identity_url).group(1)
     flash(f'User id is {g.user}')
-    u_info = user_info.get_user_data(g.user)
-    friend_set = user_info.traverse_friend_graph(g.user)
-    for i in friend_set:
-        user_info.get_user_data(i)
-    print('training data')
-    data = rec.load_file('./training_data')
-    rec.train(data)
-    print('done!')
-# just some test games for now
+    # just some test games for now
     recs = rec.get_rec(int(g.user), 100)
+    if recs is None:
+        u_info = user_info.get_user_data(g.user)
+        friend_set = user_info.traverse_friend_graph(g.user)
+        for i in friend_set:
+            user_info.get_user_data(i)
+        print('training data')
+        data = rec.load_file('./training_data')
+        rec.train(data)
+        print('done!')
     # need to filter for games in library
     unplayed_games =  user_info.get_unplayed_games(g.user)
     games = [r.product for r in recs if r.product in unplayed_games]
