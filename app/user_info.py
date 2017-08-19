@@ -41,12 +41,12 @@ def filter_unplayed(game_data):
     return unplayed_games
 
 def traverse_friend_graph(steam_id,visited=set(),depth=0):
-	if depth > 2:
+	if depth > 1:
 		print('Recursion depth reached')
 		return visited
 	visited.add(steam_id)
 	pp = pprint.PrettyPrinter(indent=4)
-	f_api = _steam_endpoint('ISteamUser/GetFriendList/v0001', steamid=steam_id, relationship=friend)
+	f_api = _steam_endpoint('ISteamUser/GetFriendList/v0001', steamid=steam_id, relationship='friend')
 	friends = requests.get(f_api).json()
 	for i in friends['friendslist']['friends']:
 		if i['steamid'] in visited:
