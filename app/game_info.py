@@ -13,6 +13,24 @@ def get_game_info(app_id):
     game_data = requests.get(g_api).json()
     #print(game_data)
     game_name = game_data[str(app_id)]['data']['name']
-    game_description = game_data[str(app_id)]['data']['short_description']
+    game_description = get_game_description(game_name)
+    # fall back on steam api
+    if (len(game_description) == 0):
+        game_description = game_data[str(app_id)]['data']['short_description']
+    if (len(game_description) == 0):
+        game_description = "Sorry, we couldn't find a description for this game :'("
     game_image = game_data[str(app_id)]['data']['header_image']
     return (game_name, app_id, game_description, game_image)
+
+
+def get_game_description(game_name):
+    url = app.config['IGDB_API_URL']  + '/games/?fields=*&limit=1&search=' + game_name
+    headers = {
+            'Accept': 'application/json',
+            'user-key': app.config['IGDB_API_KEY']
+            }
+    res = requests.get(url, headers=headers).json()[0]
+    if 'summary' in res.keys():
+        return res['summary']
+    else:
+        return ''
