@@ -1,0 +1,20 @@
+apache collaborative filtering (apache mahout)
+spotify collaborative filtering
+\-> don't have to worry about similar friends as much as long as we have diverse
+
+\-> maybe add other filters (what if someone bought a game but then never wanted to play it because they know they won't like it or something? Need extra features)
+
+- want steam community urls
+
+- milestones please!
+
+- normalise data: look out for outliers
+
+- brainstorm a naive approach (sorting approach)
+
+steam crawler using friend lists to find new users
+\-> looks more natural
+
+sponsered new games
+
+steam affliate link
