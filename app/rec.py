@@ -42,7 +42,7 @@ def get_rec(user, num_rec=10):
     try:
         user_hash = int_hash(user)
         return model.recommendProducts(user_hash, num_rec), True
-    except py4j.protocol.Py4JJavaError:
+    except Exception:
         return model.recommendProductsForUsers(num_rec), False
 
 def load_file(filename):
