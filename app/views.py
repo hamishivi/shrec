@@ -1,10 +1,18 @@
 import re
 from flask import render_template, g, flash, redirect, session
-from app import app, oid, user_info, game_info
+from app import app, oid, user_info, game_info, rec
 from random import random
 import os
 
 _steam_id_re = re.compile('steamcommunity.com/openid/id/(.*?)$')
+
+
+@app.before_first_request
+def startup():
+    data = rec.load_file('./training_data')
+    rec.train(data)
+    print('done')
+
 
 @app.before_request
 def before_request():
@@ -36,6 +44,8 @@ def after_login(resp):
     g.user = _steam_id_re.search(resp.identity_url).group(1)
     flash(f'User id is {g.user}')
     # just some test games for now
+    recs = rec.get_rec(g.user, 10)
+    print(recs)
     session['games'] = [287700, 285980, 219150, 480490, 418370, 367500]
     return render_template('loading.html')
 
