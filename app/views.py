@@ -6,17 +6,17 @@ import os
 
 _steam_id_re = re.compile('steamcommunity.com/openid/id/(.*?)$')
 
-
+'''
 @app.before_first_request
 def startup():
     data = rec.load_file('./training_data')
     rec.train(data)
     print('done')
+'''
 
-
-@app.before_request
-def before_request():
-   g.shrek = get_random_shrek()
+#@app.before_request
+#def before_request():
+   #g.shrek = get_random_shrek()
 
 @app.route('/')
 def index():
@@ -44,9 +44,11 @@ def after_login(resp):
     g.user = _steam_id_re.search(resp.identity_url).group(1)
     flash(f'User id is {g.user}')
     # just some test games for now
-    recs = rec.get_rec(g.user, 10)
-    print(recs)
-    session['games'] = [287700, 285980, 219150, 480490, 418370, 367500]
+    recs = rec.get_rec(int(g.user), 100)
+    # need to filter for games in library
+    unplayed_games =  user_info.get_unplayed_games(g.user)
+    games = [r.product for r in recs if r.product in unplayed_games]
+    session['games'] = games[:12]
     return render_template('loading.html')
 
 @app.route('/logout')

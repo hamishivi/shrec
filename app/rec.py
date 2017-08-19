@@ -23,8 +23,7 @@ def main():
     MSE = ratesAndPreds.map(lambda r: (r[1][0] - r[1][1])**2).mean()
     print("Mean Squared Error = " + str(MSE))
     '''
-    pp(data)
-    pp(get_rec(int_hash(76561198067457280)))
+    pp(get_rec(76561198067457280))
 
 def train(data):
     '''
@@ -56,3 +55,6 @@ def format_data(data_list):
 
 def int_hash(s):
     return hash(s) % 2147483647
+
+
+#main()
