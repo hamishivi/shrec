@@ -3,6 +3,7 @@ from flask import render_template, g, flash, redirect, session
 from app import app, oid, user_info, game_info, rec
 from random import random
 import os
+import shutil
 
 _steam_id_re = re.compile('steamcommunity.com/openid/id/(.*?)$')
 
