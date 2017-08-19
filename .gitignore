@@ -100,3 +100,4 @@ ENV/
 
 # config
 /config.py
+training_data
