@@ -31,4 +31,10 @@ def after_login(resp):
     flash(f'User id is {g.user}')
     # just some test games for now
     session['games'] = [287700, 285980, 219150, 480490, 418370, 367500]
+    return render_template('loading.html')
+
+@app.route('/logout')
+def logout():
+    session.pop('openid', None)
+    session.pop('games', None)
     return redirect(oid.get_next_url())
