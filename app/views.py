@@ -14,9 +14,9 @@ def startup():
     print('done')
 '''
 
-#@app.before_request
-#def before_request():
-   #g.shrek = get_random_shrek()
+@app.before_request
+def before_request():
+   g.shrek = get_random_shrek()
 
 @app.route('/')
 def index():
@@ -58,7 +58,8 @@ def logout():
     return redirect(oid.get_next_url())
 
 def get_random_shrek():
-    num = int(random()*len(os.listdir('./app/shreks')))
-    filename = os.listdir('./app/shreks')[num]
+    shreks = list(filter(lambda f: f.endswith('.txt'), os.listdir('./app/shreks')))
+    num = int(random()*len(shreks))
+    filename =shreks[num]
     file = open('./app/shreks/' + filename)
     return file.read()
