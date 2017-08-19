@@ -30,5 +30,5 @@ def after_login(resp):
     g.user = _steam_id_re.search(resp.identity_url).group(1)
     flash(f'User id is {g.user}')
     # just some test games for now
-    session['games'] = [287700, 285980, 219150]
+    session['games'] = [287700, 285980, 219150, 480490, 418370, 367500]
     return redirect(oid.get_next_url())
