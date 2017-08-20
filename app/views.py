@@ -26,7 +26,7 @@ def index():
     if 'user' in session and session['user'] is not None:
         unplayed_games = user_info.get_unplayed_games(session['user'])
         recs = rec.get_rec(int(session['user']), 10000)
-        print(recs)
+        #print(recs)
         naive = False
         if recs is None and 'naive' not in session:
             session['naive'] = True

@@ -43,21 +43,23 @@ def get_naive_recs(steam_id, maxrec=5):
     games_top = [games[i] for i in range(min(maxrec, len(games_played)))]
 
     from pprint import pprint
+    try:
+        genres_top = set()
+        for game in games_top:
+            genres_top |= set(genre["id"] for genre in get_genres(game))
 
-    genres_top = set()
-    for game in games_top:
-        genres_top |= set(genre["id"] for genre in get_genres(game))
+        recs = []
+        for game in games_unplayed:
+            genres = set(genre['id'] for genre in get_genres(game))
+            if len(recs) > 5:
+                break
 
-    recs = []
-    for game in games_unplayed:
-        genres = set(genre['id'] for genre in get_genres(game))
-        if len(recs) > 5:
-            break
+            if genres_top & genres:
+                recs.append(game['appid'])
+        return recs
+    except Exception:
+        return games_top[:12]
 
-        if genres_top & genres:
-            recs.append(game['appid'])
-
-    return recs
 
 
 def get_user_data_raw(steam_id):
