@@ -14,8 +14,7 @@ def get_game_info(app_id):
     game_data = requests.get(g_api).json()
     #print(game_data)
     if not game_data or 'data' not in game_data[str(app_id)]:
-        print(game_data)
-        return ('broke', app_id, 'error', '...')
+        return ("Broken Game", app_id, "This game doesn't exist!?", "No image :'(")
     game_name = game_data[str(app_id)]['data']['name']
     game_description = get_game_description(game_name)
     # fall back on steam api
