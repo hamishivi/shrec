@@ -38,7 +38,7 @@ def train(data):
     numIterations = 10
     model = ALS.trainImplicit(data, rank, numIterations)
     if os.path.exists("CF.model"):
-        shutil.rmtree("CF.model")
+        rmtree("CF.model")
     model.save(sc, "CF.model")
 
     return model

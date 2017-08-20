@@ -27,10 +27,12 @@ def index():
         unplayed_games = user_info.get_unplayed_games(session['user'])
         recs = rec.get_rec(int(session['user']), 10000)
         print(recs)
+        naive = False
         if recs is None and 'naive' not in session:
             session['naive'] = True
             recs = user_info.get_naive_recs(int(session['user']))
             games = recs
+            naive = True
         elif 'naive' in session and recs is None:
            session.pop('naive', None)
            u_info = user_info.get_user_data(session['user'])
@@ -50,7 +52,7 @@ def index():
         #games = [r.product for r in recs if r.product in unplayed_games]
         games = games[:12]
         game_infos = [game_info.get_game_info(id) for id in games]
-        return render_template('index.html', games=game_infos)
+        return render_template('index.html', games=game_infos, naive=naive)
     else:
         session.pop('naive', None)
         return render_template('index.html')
