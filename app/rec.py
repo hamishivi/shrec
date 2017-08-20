@@ -39,8 +39,11 @@ def train(data):
 
 def get_rec(user, num_rec=10):
     global model
-    user_hash = int_hash(user)
-    return model.recommendProducts(user_hash, num_rec)
+    try:
+        user_hash = int_hash(user)
+        return model.recommendProducts(user_hash, num_rec), True
+    except Exception:
+        return model.recommendProductsForUsers(num_rec), False
 
 def load_file(filename):
     global sc
