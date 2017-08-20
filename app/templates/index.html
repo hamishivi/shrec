@@ -4,7 +4,10 @@
         {% if games %}
     <h1>Shrec.me</h1>
     <h2 class="text-success">get shreccommended<h2>
-        {% else %}
+      {% if naive %}
+      <a href="/" class="primary">Reload for Machine Learning Results (If it's been a few minutes)</a>
+      {% endif %}
+      {% else %}
         <h1>Shrec.me</h1>
         <h2 class="text-success">get shreccommended</h2>
     <p>Give us your steam details and we will give you some nice recommendations
