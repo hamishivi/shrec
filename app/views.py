@@ -50,7 +50,7 @@ def index():
         # need to filter for games in library
         #unplayed_games =  user_info.get_unplayed_games(session['user'])
         #games = [r.product for r in recs if r.product in unplayed_games]
-        games = games[:12]
+        games = games[:9]
         game_infos = [game_info.get_game_info(id) for id in games]
         return render_template('index.html', games=game_infos, naive=naive)
     else:
