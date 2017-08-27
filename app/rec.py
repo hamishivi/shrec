@@ -16,9 +16,6 @@ try:
 except Exception:
     model = None
 
-def main():
-    data = load_file("training_data")
-    model = train(data)
     '''
     # Evaluate the model on training data
     testdata = ratings.map(lambda p: (p[0], p[1]))
@@ -27,7 +24,6 @@ def main():
     MSE = ratesAndPreds.map(lambda r: (r[1][0] - r[1][1])**2).mean()
     print("Mean Squared Error = " + str(MSE))
     '''
-    pp(get_rec(76561198067457280))
 
 def train(data):
     '''
@@ -50,6 +46,8 @@ def get_rec(user, num_rec=10):
         return model.recommendProducts(user_hash, num_rec)
     except Py4JJavaError:
         return None
+    except AttributeError:
+        return None
 
 def load_file(filename):
     global sc
@@ -64,6 +62,3 @@ def format_data(data_list):
 
 def int_hash(s):
     return hash(s) % 2147483647
-
-
-#main()
