@@ -79,7 +79,8 @@ def get_user_data(steam_id):
     with open('training_data','a') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for i in game_data['response']['games']:
-            writer.writerow([steam_id, i['appid'], i['playtime_forever']])
+            if i['playtime_forever'] > 0:
+                writer.writerow([steam_id, i['appid'], i['playtime_forever']])
 
 
 def get_unplayed_games(steam_id):
