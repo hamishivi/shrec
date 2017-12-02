@@ -39,12 +39,14 @@ def index():
         # we have already trawled this user, just give them their recs!
         if session['user'] in data['user'].cat.categories:
             recs = rec.get_rec(int(session['user']), data, game_matrix)
-            games = [r for r in recs if r in unplayed_games]
+            games = [r[0] for r in recs if r[0] in unplayed_games]
+            expln = [r[1] for r in recs if r[0] in unplayed_games]
         # give naive recommendations when there is nothing
         elif 'naive' not in session or session['naive'] is None:
             session['naive'] = True
             naive = True
             games = user_info.get_naive_recs(int(session['user']))
+            expln = None
         # if they have seen naive recomendations, then do the graph search
         # and get their recommendation
         elif 'naive' in session:
@@ -59,11 +61,19 @@ def index():
            data, game_matrix = rec.load('./training_data')
            # and then get our recs
            recs = rec.get_rec(int(session['user']), data, game_matrix)
-           games = [r for r in recs if r in unplayed_games]
+           games = [r[0] for r in recs if r[0] in unplayed_games]
+           expln = [r[1] for r in recs if r[0] in unplayed_games]
 
         games = games[:9]
         game_infos = [game_info.get_game_info(id) for id in games]
-        return render_template('index.html', games=game_infos, naive=naive)
+        if expln is not None:
+            expln = expln[:9]
+            expln_names = [[game_info.get_game_info(id) for id in r] for r in expln]
+            expln_names = [[n[0] for n in r] for r in expln_names]
+            print(expln_names)
+        else:
+            expln_names = None
+        return render_template('index.html', games=game_infos, naive=naive, expln=expln_names)
     else:
         session.pop('naive', None)
         return render_template('index.html')

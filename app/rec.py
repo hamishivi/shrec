@@ -34,8 +34,14 @@ def get_rec(username, df, gameplay_time):
     # recommend games, ordered by confidence. N is the amount of reccomendations
     # the method gives, so its set to as many games as possible, so we can filter out the
     # games the user actually owns.
+
     recs = model.recommend(userid, user_plays, N=len(df['game'].cat.categories))
-    return [games[r[0]] for r in recs]
+    explanations = explain_recs(userid, gameplay_time, [r[0] for r in recs], model)
+    recommendations = []
+    for i, r in enumerate(recs):
+        expln = [games[g] for g in explanations[i]]
+        recommendations.append((games[r[0]], expln))
+    return recommendations
 
 def load(filename):
     # Chuck it all into a dataframe and a sparse matrix format!
@@ -46,3 +52,12 @@ def load(filename):
                        (data['game'].cat.codes.copy(),
                         data['user'].cat.codes.copy())))
     return data, gameplay_time
+
+def explain_recs(userid, user_items, itemids, model):
+    explanations = []
+    user_weights = None
+    for itemid in itemids:
+        total_score, top_contributions, user_weights = model.explain(userid, user_items, itemid, user_weights, N=4)
+        explanations.append([t[0] for t in top_contributions])
+        user_weights = user_weights
+    return explanations
