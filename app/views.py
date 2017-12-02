@@ -32,6 +32,7 @@ def before_request():
 
 @app.route('/')
 def index():
+    # this entire method needs a biiiit of a rewrite, its a mess
     if 'user' in session and session['user'] is not None:
         unplayed_games = user_info.get_unplayed_games(session['user'])
         data, game_matrix = rec.load('./training_data')
@@ -66,13 +67,13 @@ def index():
 
         games = games[:9]
         game_infos = [game_info.get_game_info(id) for id in games]
+        # expln can be none when we give naive recommendations
+        expln_names = None
         if expln is not None:
             expln = expln[:9]
             expln_names = [[game_info.get_game_info(id) for id in r] for r in expln]
-            expln_names = [[n[0] for n in r] for r in expln_names]
-            print(expln_names)
-        else:
-            expln_names = None
+            # so it looks better on the page
+            expln_names = [', '.join([n[0] for n in r]) for r in expln_names]
         return render_template('index.html', games=game_infos, naive=naive, expln=expln_names)
     else:
         session.pop('naive', None)
