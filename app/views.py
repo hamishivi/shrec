@@ -7,13 +7,24 @@ import shutil
 
 _steam_id_re = re.compile('steamcommunity.com/openid/id/(.*?)$')
 
-'''
 @app.before_first_request
 def startup():
-    data = rec.load_file('./training_data')
-    rec.train(data)
-    print('done')
-'''
+    # load from the file.
+    global data, game_matrix
+    # try to load
+    try:
+        print('loading training data')
+        data, game_matrix = rec.load('./training_data')
+    # if something goes wrong, trace a random user and then try again!
+    except Exception:
+        print('no data found, loading random user data')
+        u_info = user_info.get_user_data(76561198045011271)
+        friend_set = user_info.traverse_friend_graph(76561198045011271)
+        for i in friend_set:
+             user_info.get_user_data(i)
+        data, game_matrix = rec.load('./training_data')
+        print('loaded')
+
 
 @app.before_request
 def before_request():
@@ -21,35 +32,35 @@ def before_request():
 
 @app.route('/')
 def index():
-    print(session)
-    print('user' in g)
     if 'user' in session and session['user'] is not None:
         unplayed_games = user_info.get_unplayed_games(session['user'])
-        recs = rec.get_rec(int(session['user']), 10000)
-        #print(recs)
-        naive = False
-        if recs is None and 'naive' not in session:
+        data, game_matrix = rec.load('./training_data')
+        naive =  False
+        # we have already trawled this user, just give them their recs!
+        if session['user'] in data['user'].cat.categories:
+            recs = rec.get_rec(int(session['user']), data, game_matrix)
+            games = [r for r in recs if r in unplayed_games]
+        # give naive recommendations when there is nothing
+        elif 'naive' not in session or session['naive'] is None:
             session['naive'] = True
-            recs = user_info.get_naive_recs(int(session['user']))
-            games = recs
             naive = True
-        elif 'naive' in session and recs is None:
+            games = user_info.get_naive_recs(int(session['user']))
+        # if they have seen naive recomendations, then do the graph search
+        # and get their recommendation
+        elif 'naive' in session:
            session.pop('naive', None)
+           naive = False
+           # friend search
            u_info = user_info.get_user_data(session['user'])
            friend_set = user_info.traverse_friend_graph(session['user'])
            for i in friend_set:
                 user_info.get_user_data(i)
-           print('training data')
-           data = rec.load_file('./training_data')
-           rec.train(data)
-           print('done!')
-           recs = rec.get_rec(int(g.user), 10000)
-           games = [r.product for r in recs if r.product in unplayed_games]
-        else:
-           games = [r.product for r in recs if r.product in unplayed_games]
-        # need to filter for games in library
-        #unplayed_games =  user_info.get_unplayed_games(session['user'])
-        #games = [r.product for r in recs if r.product in unplayed_games]
+           # reload data (as the above search writes straight to the csv)
+           data, game_matrix = rec.load('./training_data')
+           # and then get our recs
+           recs = rec.get_rec(int(session['user']), data, game_matrix)
+           games = [r for r in recs if r in unplayed_games]
+
         games = games[:9]
         game_infos = [game_info.get_game_info(id) for id in games]
         return render_template('index.html', games=game_infos, naive=naive)
@@ -84,6 +95,7 @@ def logout():
     session.pop('openid', None)
     session.pop('games', None)
     session.pop('user', None)
+    session.pop('naive', None)
     return redirect(oid.get_next_url())
 
 def get_random_shrek():
