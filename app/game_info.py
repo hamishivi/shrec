@@ -15,18 +15,18 @@ def get_game_info(app_id):
         # broken game, look it up on steam-tracker
         game_name = get_unlisted_name(app_id)
         game_image = "Sorry, no image found"
-        # no help here :'(
+        # no help here, just gotta report it... :'(
         if game_name is None:
             return ("Broken Game", app_id, "This game doesn't exist!?", "No image :'(")
     else:
         game_name = game_data[str(app_id)]['data']['name']
         game_image = game_data[str(app_id)]['data']['header_image']
     game_description = get_game_description(game_name)
-    # fall back on steam api
+    # fall back on steam api if didn't get description
     if (len(game_description) == 0):
         game_description = game_data[str(app_id)]['data']['short_description']
     if (len(game_description) == 0):
-        game_description = "Sorry, we couldn't find a description for this game :'("
+        game_description = "Sorry, we couldn't find a description for this game 😥"
     if len(game_description) > 200:
         try:
             num = game_description.index('. ', 190)
@@ -49,6 +49,8 @@ def get_game_description(game_name):
         return ''
 
 def get_unlisted_name(game_id):
+    # this is a list of all unlisted games which were on steam
+    # I couldn't find an api that allowed search by id
     st_api = 'https://steam-tracker.com/api?action=GetAppList'
     res = requests.get(st_api).json()['removed_apps']
     for app in res:

@@ -32,8 +32,9 @@ def before_request():
 
 @app.route('/')
 def index():
-    # this entire method needs a biiiit of a rewrite, its a mess
+    # if you've been logged in
     if 'user' in session and session['user'] is not None:
+        # grab necessary data
         unplayed_games = user_info.get_unplayed_games(session['user'])
         data, game_matrix = rec.load('./training_data')
         naive =  False
@@ -48,7 +49,7 @@ def index():
             naive = True
             games = user_info.get_naive_recs(int(session['user']))
             expln = None
-        # if they have seen naive recomendations, then do the graph search
+        # if they have seen naive recomendations, then do the friend search
         # and get their recommendation
         elif 'naive' in session:
            session.pop('naive', None)
@@ -74,6 +75,7 @@ def index():
             expln_names = [[game_info.get_game_info(id) for id in r] for r in expln]
             # so it looks better on the page
             expln_names = [', '.join([n[0] for n in r]) for r in expln_names]
+        # finally, return everything
         return render_template('index.html', games=game_infos, naive=naive, expln=expln_names)
     else:
         session.pop('naive', None)
