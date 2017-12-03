@@ -1,6 +1,7 @@
-import requests
 import csv
 from app import app
+
+from app import cache
 
 def get_game_info(app_id):
     '''
@@ -10,7 +11,7 @@ def get_game_info(app_id):
     '''
     g_api = 'http://store.steampowered.com/api/appdetails/?appids=' + str(app_id) + '&format=json'
     output = []
-    game_data = requests.get(g_api).json()
+    game_data = cache.get(g_api).json()
     if not game_data or 'data' not in game_data[str(app_id)]:
         # broken game, look it up on steam-tracker
         game_name = get_unlisted_name(app_id)
@@ -42,7 +43,7 @@ def get_game_description(game_name):
             'Accept': 'application/json',
             'user-key': app.config['IGDB_API_KEY']
             }
-    res = requests.get(url, headers=headers).json()[0]
+    res = cache.get(url, headers=headers).json()[0]
     if 'summary' in res.keys():
         return res['summary']
     else:
@@ -52,7 +53,7 @@ def get_unlisted_name(game_id):
     # this is a list of all unlisted games which were on steam
     # I couldn't find an api that allowed search by id
     st_api = 'https://steam-tracker.com/api?action=GetAppList'
-    res = requests.get(st_api).json()['removed_apps']
+    res = cache.get(st_api).json()['removed_apps']
     for app in res:
         if app['appid'] == str(game_id):
             return app['name']

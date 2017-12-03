@@ -1,4 +1,4 @@
-import requests
+from app import cache
 import csv
 import pprint
 from urllib.parse import urljoin
@@ -18,7 +18,7 @@ def _steam_endpoint(endpoint, apikey=app.config['STEAM_API_KEY'], **params):
     if paramstring:
         url.append("?" + paramstring)
 
-    return requests.get(urljoin(*url))
+    return cache.get(urljoin(*url))
 
 
 def get_naive_recs(steam_id, maxrec=5):
@@ -28,7 +28,7 @@ def get_naive_recs(steam_id, maxrec=5):
 
     def get_game_data(appid):
         BASE_URL = "http://store.steampowered.com/api/"
-        return requests.get(urljoin(BASE_URL, f"appdetails?appids={appid}"))
+        return cache.get(urljoin(BASE_URL, f"appdetails?appids={appid}"))
 
     def get_genres(game):
         return get_game_data(game['appid']).json()[str(game['appid'])]['data']['genres']
