@@ -1,4 +1,5 @@
 import re
+import multiprocessing as multip
 from flask import render_template, g, flash, redirect, session
 from app import app, oid, user_info, game_info, rec
 from random import random
@@ -18,7 +19,7 @@ def startup():
     # if something goes wrong, trace a random user and then try again!
     except Exception:
         print('no data found, loading random user data')
-        u_info = user_info.get_user_data(76561198045011271)
+        user_info.get_user_data(76561198045011271)
         friend_set = user_info.traverse_friend_graph(76561198045011271)
         for i in friend_set:
              user_info.get_user_data(i)
@@ -51,10 +52,12 @@ def index():
            session.pop('naive', None)
            naive = False
            # friend search
-           u_info = user_info.get_user_data(session['user'])
-           friend_set = user_info.traverse_friend_graph(session['user'])
-           for i in friend_set:
-                user_info.get_user_data(i)
+           user_info.get_user_data(session['user'])
+           def get_friends():
+                friend_set = user_info.traverse_friend_graph(session['user'])
+                for i in friend_set:
+                    user_info.get_user_data(i)
+           multip.Process(target=get_friends, name='friendship', daemon=True).start()
            # reload data (as the above search writes straight to the csv)
            data, game_matrix = rec.load('./training_data')
            # and then get our recs
