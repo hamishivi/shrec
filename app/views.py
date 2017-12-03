@@ -64,8 +64,11 @@ def index():
            recs = rec.get_rec(int(session['user']), data, game_matrix)
            games = [r for r in recs if r in unplayed_games]
 
+        mpool = multip.Pool(4)
         games = games[:9]
-        game_infos = [game_info.get_game_info(id) for id in games]
+        game_infos = mpool.map(game_info.get_game_info, games)
+        mpool.close()
+        mpool.join()
         return render_template('index.html', games=game_infos, naive=naive)
     else:
         session.pop('naive', None)
