@@ -15,11 +15,5 @@ def get(url, **kwargs):
         # check if hit limit
         if len(cache) > cache_limit:
             # remove least used item from cache
-            pop_url = list(cache.keys())[0]
-            least_used = cache[pop_url][0]
-            for url in cache:
-                if cache[url][0] < least_used:
-                    least_used = cache[url][0]
-                    pop_url = url
-            cache.pop(url)
+            cache.pop(min(cache.keys(), key=lambda url: cache[url][0]))
         return response
