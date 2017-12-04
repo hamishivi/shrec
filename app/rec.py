@@ -37,12 +37,9 @@ def get_rec(username, df, gameplay_time):
     # games the user actually owns.
     recs = model.recommend(userid, user_plays, N=len(df['game'].cat.categories))
     # explain each recommendation
-    explanations = explain_recs(userid, gameplay_time, [r[0] for r in recs], model, 4)
+    explanations = explain_recs(userid, gameplay_time, [rec for rec, *_ in recs], model, 4)
     # convert from the matrix ids to the game ids as per steam
-    recommendations = []
-    for i, r in enumerate(recs):
-        expln = [games[g] for g in explanations[i]]
-        recommendations.append((games[r[0]], expln))
+    recommendations = [(games[rec], [games[g] for g in expln]) for (rec, *_), expln in zip(recs, explanations)]
     return recommendations
 
 def load(filename):
@@ -59,7 +56,7 @@ def explain_recs(userid, user_items, itemids, model, n):
     '''
     This takes in a userid (based from the matrix), a sparse matrix (not csr) to generate
     the explanations from, a list of items/recommendations to explain, and the model itself.
-    It then returns a list of N games per explanation.
+    It then returns a list of n games per explanation.
     '''
     explanations = []
     user_weights = None
@@ -67,6 +64,5 @@ def explain_recs(userid, user_items, itemids, model, n):
         # N is the number of items you put in the explanation. User weights can be reused
         # between calls to speed it up
         total_score, top_contributions, user_weights = model.explain(userid, user_items, itemid, user_weights, N=n)
-        explanations.append([t[0] for t in top_contributions])
-        user_weights = user_weights
+        explanations.append([t for t, *_ in top_contributions])
     return explanations
