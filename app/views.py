@@ -41,8 +41,8 @@ def index():
         # we have already trawled this user, just give them their recs!
         if session['user'] in data['user'].cat.categories:
             recs = rec.get_rec(int(session['user']), data, game_matrix)
-            games = [r[0] for r in recs if r[0] in unplayed_games]
-            expln = [r[1] for r in recs if r[0] in unplayed_games]
+            # transpose and filter recs
+            games, expln = list(map(list, zip(*(rec, ex for rec, ex in recs if rec in unplayed_games]))))
         # give naive recommendations when there is nothing
         elif 'naive' not in session or session['naive'] is None:
             session['naive'] = True
@@ -63,20 +63,19 @@ def index():
            data, game_matrix = rec.load('./training_data')
            # and then get our recs
            recs = rec.get_rec(int(session['user']), data, game_matrix)
-           games = [r[0] for r in recs if r[0] in unplayed_games]
-           expln = [r[1] for r in recs if r[0] in unplayed_games]
+           games, expln = list(map(list, zip(*(rec, ex for rec, ex in recs if rec in unplayed_games))))
 
         games = games[:9]
         game_infos = [game_info.get_game_info(id) for id in games]
         # expln can be none when we give naive recommendations
-        expln_names = None
+        expln_infos = None
         if expln is not None:
             expln = expln[:9]
-            expln_names = [[game_info.get_game_info(id) for id in r] for r in expln]
+            expln_infos = [[game_info.get_game_info(id) for id in r] for r in expln]
             # so it looks better on the page
-            expln_names = [', '.join([n[0] for n in r]) for r in expln_names]
+            expln_infos = [', '.join([name for name, *_ in games]) for games in expln_infos]
         # finally, return everything
-        return render_template('index.html', games=game_infos, naive=naive, expln=expln_names)
+        return render_template('index.html', games=game_infos, naive=naive, expln=expln_infos)
     else:
         session.pop('naive', None)
         return render_template('index.html')
