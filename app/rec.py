@@ -43,7 +43,9 @@ def get_rec(username, df, gameplay_time):
     return recommendations
 
 def load(filename):
-    # Chuck it all into a dataframe and a sparse matrix format!
+    '''
+    Loads a file and chucks it all into a dataframe and a sparse matrix
+    '''
     data = pd.read_csv(filename, names=['user', 'game', 'hours'])
     data['user'] = data['user'].astype('category')
     data['game'] = data['game'].astype('category')

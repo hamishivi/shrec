@@ -1,6 +1,5 @@
 import requests
 
-
 # cache has format url: usage, response
 cache = {}
 # number of items we want to keep
