@@ -5,7 +5,7 @@
     <h1>Shrec.me</h1>
     <h2 class="text-success">get shreccommended<h2>
       {% if naive %}
-      <a href="/" class="primary">Reload for Machine Learning Results (If it's been a few minutes)</a>
+      <a href="/" class="primary">Reload for Machine Learning Results (Will take some time)</a>
       {% endif %}
       {% else %}
         <h1>Shrec.me</h1>
@@ -29,6 +29,9 @@
                 <h5>Recommendation {{ loop.index }}:</h5><h3 class="card-title"><a href="steam://rungameid/{{ game[1] }}" class="text-success">{{ game[0] }}</a></h3>
                 <blockquote class="blockquote text-left">
                 <p><small class="card-text">{{ game[2]|safe  }}</small></p>
+                {% if expln %}
+                <p><small>Based on your playing of: {{ expln[loop.index - 1] }}.</small></p>
+                {% endif %}
                 </blockquote>
             </div>
         </div>
