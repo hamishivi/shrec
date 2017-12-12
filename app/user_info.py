@@ -1,4 +1,4 @@
-import requests
+from app import cache
 import csv
 import pprint
 from urllib.parse import urljoin
@@ -17,22 +17,18 @@ def _steam_endpoint(endpoint, apikey=app.config['STEAM_API_KEY'], **params):
     paramstring = "&".join([f"{k}={params[k]}" for k in params])
     if paramstring:
         url.append("?" + paramstring)
-
-    return requests.get(urljoin(*url))
-
+    return cache.get(urljoin(*url))
 
 def get_naive_recs(steam_id, maxrec=5):
     '''
     Get recomendations using a naive non-machine-learning approach
     '''
-
     def get_game_data(appid):
         BASE_URL = "http://store.steampowered.com/api/"
-        return requests.get(urljoin(BASE_URL, f"appdetails?appids={appid}"))
+        return cache.get(urljoin(BASE_URL, f"appdetails?appids={appid}"))
 
     def get_genres(game):
         return get_game_data(game['appid']).json()[str(game['appid'])]['data']['genres']
-
 
     user_data = get_user_data_raw(steam_id)['response']
     games = user_data['games']
@@ -60,12 +56,12 @@ def get_naive_recs(steam_id, maxrec=5):
     except Exception:
         return games_top[:12]
 
-
-
 def get_user_data_raw(steam_id):
+    '''
+    returns json of user games
+    '''
     req = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
     return req.json()
-
 
 def get_user_data(steam_id):
     '''
@@ -84,9 +80,10 @@ def get_user_data(steam_id):
 
 
 def get_unplayed_games(steam_id):
-    req = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
-    game_data = req.json()
-    return filter_unplayed(game_data)
+    '''
+    gets all unplayed games from a certain user.
+    '''
+    return filter_unplayed(get_user_data_raw(steam_id))
 
 def filter_unplayed(game_data):
     '''
@@ -100,7 +97,6 @@ def filter_unplayed(game_data):
         return unplayed_games
     except KeyError:
         pass
-
 
 def traverse_friend_graph(steam_id, cap=50, maxdepth=4, visited=set(), depth=0):
     """Get a recursive list of connections up to a certain depth and number"""
@@ -122,9 +118,6 @@ def traverse_friend_graph(steam_id, cap=50, maxdepth=4, visited=set(), depth=0):
     for i in get_friends(steam_id):
         if i['steamid'] in visited:
             continue
-
         visited |= traverse_friend_graph(i['steamid'], cap=cap, maxdepth=maxdepth,
                                          visited=visited, depth=depth+1)
-
-
     return visited
