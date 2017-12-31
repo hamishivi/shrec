@@ -1,51 +1,54 @@
 {% include 'top.html' %}
 <body class="bg-dark text-white text-center">
-    <div class="container">
-        {% if games %}
-    <h1>Shrec.me</h1>
-    <h2 class="text-success">get shreccommended<h2>
-      {% if naive %}
-      <a href="/" class="primary">Reload for Machine Learning Results (Will take some time)</a>
-      {% endif %}
-      {% else %}
-        <h1>Shrec.me</h1>
-        <h2 class="text-success">get shreccommended</h2>
-    <p>Give us your steam details and we will give you some nice recommendations
-        from your backlog!</p>
+<div id="wrapper">
+<div id="centerer">
+	<div class="container">
+		{% if games %}
+	<h1>Shrec.me</h1>
+	<h2 class="text-success">get shreccommended<h2>
+	{% if naive %}
+		<a href="/" class="primary">Reload for Machine Learning Results (Will take some time)</a>
+	{% endif %}
+	{% else %}
+		<h1>Shrec.me</h1>
+		<h2 class="text-success">get shreccommended</h2>
+	<p>Give us your steam details and we will give you some nice recommendations from your backlog!</p>
   <form action="/login">
   <button type="submit" class="btn btn-primary">Login to Steam!</button>
 </form>
 {% endif %}
-    <br><br>
-        {% if games %}
-        <p> Here are your recommendations! </p>
-        {% for game in games %}
-        {% if loop.index%3 == 1 %}
-        <div class="card-deck">
-        {% endif %}
-        <div class="card text-secondary bg-light mb-3" style="">
-            <img class="card-img-top img-thumbnail" src="{{ game[3] }}" alt="Some Video Game Image" width="20">
-            <div class="card-body">
-                <h5>Recommendation {{ loop.index }}:</h5><h3 class="card-title"><a href="steam://rungameid/{{ game[1] }}" class="text-success">{{ game[0] }}</a></h3>
-                <blockquote class="blockquote text-left">
-                <p><small class="card-text">{{ game[2]|safe  }}</small></p>
-                {% if expln %}
-                <p><small>Based on your playing of: {{ expln[loop.index - 1] }}.</small></p>
-                {% endif %}
-                </blockquote>
-            </div>
-        </div>
-        {% if loop.index%3 == 0 %}
-        </div>
-        {% endif %}
-        {% endfor %}
-        <form action="/logout">
-        <button type="submit" class="btn btn-primary">Logout</button>
-      </form>
-        {% endif %}
+	<br><br>
+		{% if games %}
+		<p> Here are your recommendations! </p>
+		{% for game in games %}
+		{% if loop.index%3 == 1 %}
+		<div class="card-deck">
+		{% endif %}
+		<div class="card text-secondary bg-light mb-3" style="">
+			<img class="card-img-top img-thumbnail" src="{{ game[3] }}" alt="Some Video Game Image" width="20">
+			<div class="card-body">
+				<h5>Recommendation {{ loop.index }}:</h5><h3 class="card-title"><a href="steam://rungameid/{{ game[1] }}" class="text-success">{{ game[0] }}</a></h3>
+				<blockquote class="blockquote text-left">
+				<p><small class="card-text">{{ game[2]|safe  }}</small></p>
+				{% if expln %}
+				<p><small>Based on your playing of: {{ expln[loop.index - 1] }}.</small></p>
+				{% endif %}
+				</blockquote>
+			</div>
+		</div>
+		{% if loop.index%3 == 0 %}
+		</div>
+		{% endif %}
+		{% endfor %}
+		<form action="/logout">
+		<button type="submit" class="btn btn-primary">Logout</button>
+	  </form>
+		{% endif %}
 </div>
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
+</div>
+</div>
+	<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.11.0/umd/popper.min.js" integrity="sha384-b/U6ypiBEHpOf/4+1nzFpr53nxSS+GLCkfwBdFNTxtclqqenISfwAzpKaMNFNmj4" crossorigin="anonymous"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/js/bootstrap.min.js" integrity="sha384-h0AbiXch4ZDo7tp9hKZ4TsHbi047NrKGLO3SEJAg45jXxnGIfYzk4Si90RDIqNm1" crossorigin="anonymous"></script>
 </body>
 {% include 'bottom.html' %}
