@@ -3,6 +3,7 @@ import csv
 import pprint
 from urllib.parse import urljoin
 from app import app
+import sqlite3 as sql
 
 def _steam_endpoint(endpoint, apikey=app.config['STEAM_API_KEY'], **params):
     '''
@@ -63,20 +64,56 @@ def get_user_data_raw(steam_id):
     req = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
     return req.json()
 
+
+
+# def get_user_data(steam_id):
+#     '''
+#     Create a csv file called training_data with the format: (steamid,gameid,play_time)
+#     '''
+#     game_data = get_user_data_raw(steam_id)
+#     played = filter_unplayed(game_data)
+#     if played is None:
+#         return
+#     print(len(played))
+#     with open('training_data','a') as f:
+#         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+#         for i in game_data['response']['games']:
+#             if i['playtime_forever'] > 0:
+#                 writer.writerow([steam_id, i['appid'], i['playtime_forever']])
+
+
 def get_user_data(steam_id):
+
     '''
-    Create a csv file called training_data with the format: (steamid,gameid,play_time)
+
+    Insert all games playtime data of steam_id user into database 'data.db' with relation:
+        Play_time(steamid, gameid, play_time)
+    Create db if doensn't exist
+
     '''
+
+    conn = sql.connect('../data.db')
+    c = conn.cursor()
+
+    #Potential bug: Storing steamid as INTEGER (max: 2^64)
+    c.execute(''' CREATE TABLE IF NOT EXISTS Play_time
+                (steamid INTEGER, gameid INTEGER, play_time INTEGER)''')
+
     game_data = get_user_data_raw(steam_id)
+    games = game_data['response']['games']
     played = filter_unplayed(game_data)
     if played is None:
         return
     print(len(played))
-    with open('training_data','a') as f:
-        writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        for i in game_data['response']['games']:
-            if i['playtime_forever'] > 0:
-                writer.writerow([steam_id, i['appid'], i['playtime_forever']])
+
+
+    rows = [(steam_id, i['appid'], i['playtime_forever']) for i in games if i['playtime_forever'] > 0]
+    c.executemany('INSERT INTO Play_time VALUES (?, ?, ?)', rows)
+
+    conn.commit()
+    conn.close()
+
+
 
 
 def get_unplayed_games(steam_id):
