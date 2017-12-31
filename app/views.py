@@ -1,4 +1,5 @@
 import re
+import multiprocessing as multip
 from flask import render_template, g, flash, redirect, session
 from app import app, oid, user_info, game_info, rec
 from random import random
@@ -18,7 +19,7 @@ def startup():
     # if something goes wrong, add a random user and then try again!
     except Exception:
         print('no data found, loading random user data')
-        u_info = user_info.get_user_data(76561198045011271) # user randomly chosen by human
+        user_info.get_user_data(76561198045011271)
         friend_set = user_info.traverse_friend_graph(76561198045011271)
         for i in friend_set:
              user_info.get_user_data(i)
@@ -46,9 +47,11 @@ def index():
                 naive = False
                 # friend search
                 u_info = user_info.get_user_data(session['user'])
-                friend_set = user_info.traverse_friend_graph(session['user'])
-                for i in friend_set:
-                     user_info.get_user_data(i)
+                def get_friend_data():
+                    friend_set = user_info.traverse_friend_graph(session['user'])
+                    for i in friend_set:
+                        user_info.get_user_data(i)
+                multip.Process(target=get_friend_data, name='friendship', daemon=True).start()
                 # reload data (as the above search writes straight to the csv)
                 data, game_matrix = rec.load('./training_data')
 
@@ -63,14 +66,15 @@ def index():
             expln = None
 
         games = games[:9]
-        game_infos = [game_info.get_game_info(id) for id in games]
-        # expln can be none when we give naive recommendations
-        expln_infos = None
-        if expln is not None:
-            expln = expln[:9]
-            expln_infos = [[game_info.get_game_name(id) for id in r] for r in expln]
-            # so it looks better on the page
-            expln_infos = [', '.join(games) for games in expln_infos]
+        with multip.Pool(4) as mpool:
+            game_infos = mpool.map(game_info.get_game_info,  games)
+            # expln can be none when we give naive recommendations
+            expln_infos = None
+            if expln is not None:
+                expln = expln[:9]
+                expln_infos = [mpool.map(game_info.get_game_name, r) for r in expln]
+                # so it looks better on the page
+                expln_infos = [', '.join(games) for games in expln_infos]
         # finally, return everything
         return render_template('index.html', games=game_infos, naive=naive, expln=expln_infos)
     else:
