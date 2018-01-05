@@ -4,15 +4,15 @@ from contextlib import suppress
 from collections import namedtuple
 
 
-def get_game_info(app_id : int):
+def fetch_game_info(app_id : int):
     '''
     returns a tuple (game_name, game_id, game_description, game_image) from steam and IGDB apis.
     '''
     app_id = str(app_id)
     data = cache.get(steam_api_url(app_id)).json()
-    name = extract_name(data, app_id) or unlisted_name(app_id)
+    name = extract_name(data, app_id) or fetch_unlisted_name(app_id)
     if name:
-        description = game_description(name, data, app_id)
+        description = fetch_description(name, data, app_id)
         image = data[app_id]['data']['header_image']
     else:
         name = 'Broken Game'
@@ -23,17 +23,17 @@ def get_game_info(app_id : int):
 GameInfo = namedtuple('GameInfo', 'name, app_id, description, image')
 
 
-def get_game_name(app_id : int):
+def fetch_game_name(app_id : int):
     '''
     When we just want to get the name, and avoid unnecessary api calls.
     '''
     app_id = str(app_id)
     return extract_name(
         cache.get(steam_api_url(app_id)).json(), app_id
-    ) or unlisted_name(app_id) or f'invalid steam id: {app_id}'
+    ) or fetch_unlisted_name(app_id) or f'invalid steam id: {app_id}'
 
 
-def game_description(game_name, steam_data, app_id : str):
+def fetch_description(game_name, steam_data, app_id : str):
     '''
     gets description of game from IGDB, otherwise uses steam description if
     possible.
@@ -71,7 +71,7 @@ def extract_name(game_data : dict, app_id : str):
         return game_data[app_id]['data']['name']
 
 
-def unlisted_name(app_id : str):
+def fetch_unlisted_name(app_id : str):
     return find_removed_name(cache.get(STEAM_TRACKER_API).json()['removed_apps'], app_id)
 
 STEAM_TRACKER_API = 'https://steam-tracker.com/api?action=GetAppList'
