@@ -1,6 +1,5 @@
 from app import cache
 import csv
-import pprint
 from urllib.parse import urljoin
 from app import app
 
@@ -38,7 +37,6 @@ def get_naive_recs(steam_id, maxrec=5):
     games_unplayed = [i for i in games if i['playtime_forever'] == 0]
     games_top = [games[i] for i in range(min(maxrec, len(games_played)))]
 
-    from pprint import pprint
     try:
         genres_top = set()
         for game in games_top:
@@ -71,7 +69,6 @@ def get_user_data(steam_id):
     played = filter_unplayed(game_data)
     if played is None:
         return
-    print(len(played))
     with open('training_data','a') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         for i in game_data['response']['games']:
