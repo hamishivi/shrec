@@ -66,12 +66,12 @@ def index():
             expln = None
 
         games = games[:9]
-        game_infos = [game_info.get_game_info(id) for id in games]
+        game_infos = [game_info.fetch_game_info(id) for id in games]
         # expln can be none when we give naive recommendations
         expln_infos = None
         if expln is not None:
             expln = expln[:9]
-            expln_infos = [[game_info.get_game_name(id) for id in r] for r in expln]
+            expln_infos = [[game_info.fetch_game_name(id) for id in r] for r in expln]
             # so it looks better on the page
             expln_infos = [', '.join(games) for games in expln_infos]
         # finally, return everything
