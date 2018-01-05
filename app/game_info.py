@@ -1,82 +1,100 @@
-import csv
+from typing import Sequence
 from app import app, cache
+from contextlib import suppress
+from collections import namedtuple
 
-def get_game_info(app_id):
+
+def get_game_info(app_id : int):
     '''
     returns a tuple (game_name, game_id, game_description, game_image) from steam and IGDB apis.
     '''
-    # Make Api call
-    g_api = f'http://store.steampowered.com/api/appdetails/?appids={app_id}&format=json'
-    game_data = cache.get(g_api).json()
-    # Check we actually got game data
-    if not game_data or 'data' not in game_data[str(app_id)]:
-        # not data from steam, look it up on steam-tracker
-        game_name = get_unlisted_name(app_id)
-        game_image = "Sorry, no image found"
-        # no help here, just gotta report it... :'(
-        if game_name is None:
-            return ("Broken Game", app_id, "This game doesn't exist!?", "No image found :'(")
+    app_id = str(app_id)
+    data = cache.get(steam_api_url(app_id)).json()
+    name = extract_name(data, app_id) or unlisted_name(app_id)
+    if name:
+        description = game_description(name, data, app_id)
+        image = data[app_id]['data']['header_image']
     else:
-        game_name = game_data[str(app_id)]['data']['name']
-        game_image = game_data[str(app_id)]['data']['header_image']
+        name = 'Broken Game'
+        description = "This game doesn't exists!?"
+        image = "No image found :'("
+    return GameInfo(name, app_id, description, image)
 
-    game_description = get_game_description(game_name, game_data[str(app_id)]['data']['short_description'])
+GameInfo = namedtuple('GameInfo', 'name, app_id, description, image')
 
-    return (game_name, app_id, game_description, game_image)
 
-def get_game_name(app_id):
+def get_game_name(app_id : int):
     '''
     When we just want to get the name, and avoid unnecessary api calls.
     '''
-    g_api = f'http://store.steampowered.com/api/appdetails/?appids={app_id}&format=json'
-    game_data = cache.get(g_api).json()
-    if not game_data or 'data' not in game_data[str(app_id)]:
-        return get_unlisted_name(app_id)
-    else:
-        return game_data[str(app_id)]['data']['name']
+    app_id = str(app_id)
+    return extract_name(
+        cache.get(steam_api_url(app_id)).json(), app_id
+    ) or unlisted_name(app_id) or f'invalid steam id: {app_id}'
 
-def get_game_description(game_name, steam_description):
+
+def game_description(game_name, steam_data, app_id : str):
     '''
     gets description of game from IGDB, otherwise uses steam description if
     possible.
     '''
-    url = f'{app.config["IGDB_API_URL"]}/games/?fields=*&limit=1&search={game_name}'
-    headers = {
-            'Accept': 'application/json',
-            'user-key': app.config['IGDB_API_KEY']
-            }
-    res = cache.get(url, headers=headers).json()[0]
-    # check if we actually found something
-    if 'summary' in res.keys():
-        return shorten_description(res['summary'])
-    # otherwise use steam description
+    try:
+        steam_description = steam_data[app_id]['data']['short_description']
+    except:
+        steam_description = ''
+
+    IGDB_data = cache.get(IGDB_api_url(game_name), headers=IGDB_HEADERS).json()[0]
+    if 'summary' in IGDB_data:
+        return shorten_desc(IGDB_data['summary'])
     elif len(steam_description) > 0:
-        return shorten_description(steam_description)
-    # if no steam description, just tell the user
+        return shorten_desc(steam_description)
     else:
         return "Sorry, we couldn't find a description for this game 😥"
 
-def shorten_description(description):
-    '''
-    A helper method to chop strings more than 200 characters long. It tries to find the closest
-    sentence end and then just cut there.
-    '''
-    if len(description) > 200:
-        try:
-            num = description.index('. ', 190)
-            description = description[:num] + '...'
-        except Exception:
-            print('Something went wrong with game description extraction')
-    return description
 
-def get_unlisted_name(game_id):
+def steam_api_url(app_id):
+    return  f'http://store.steampowered.com/api/appdetails/?appids={app_id}&format=json'
+
+
+IGDB_HEADERS = cache.HashableDict({
+    'Accept' : 'application/json',
+    'user-key' : app.config['IGDB_API_KEY']
+})
+
+
+def IGDB_api_url(game_name):
+    return f'{app.config["IGDB_API_URL"]}/games/?fields=*&limit=1&search={game_name}'
+
+
+def extract_name(game_data : dict, app_id : str):
+    with suppress(KeyError, TypeError):
+        return game_data[app_id]['data']['name']
+
+
+def unlisted_name(app_id : str):
+    return find_removed_name(cache.get(STEAM_TRACKER_API).json()['removed_apps'], app_id)
+
+STEAM_TRACKER_API = 'https://steam-tracker.com/api?action=GetAppList'
+
+
+def find_removed_name(removed_apps : Sequence[dict], app_id : str):
     '''
-    searches a list of all unlisted games which were on steam for the given game-
+    searches a list of all unlisted games which were on steam for the given game
     I couldn't find an api that allowed search by id.
     '''
-    st_api = 'https://steam-tracker.com/api?action=GetAppList'
-    res = cache.get(st_api).json()['removed_apps']
-    for app in res:
-        if app['appid'] == str(game_id):
+    for game_data in removed_apps:
+        if game_data['appid'] == app_id:
             return app['name']
-    return None
+
+
+def shorten_desc(description : str):
+    '''
+    A helper method to chop strings more than 200 characters long.
+    It tries to find the closest sentence end and then just cut there.
+    '''
+    try:
+        if len(description) > 200:
+            cutoff = description.index('. ', 190)
+            description = description[:cutoff] + '...'
+    finally:
+        return description
