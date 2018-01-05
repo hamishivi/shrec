@@ -10,10 +10,10 @@ def get_rec(username, df, gameplay_time):
     '''
     # create a model
     model = implicit.als.AlternatingLeastSquares()
-    userid = None
+    user_id = None
     try:
-        # get the userid mapping from the sparse matrix
-        userid = df['user'].cat.categories.tolist().index(username)
+        # get the user_id mapping from the sparse matrix
+        user_id = df['user'].cat.categories.tolist().index(username)
     except ValueError:
         return None
 
@@ -35,12 +35,13 @@ def get_rec(username, df, gameplay_time):
     # recommend games, ordered by confidence. N is the amount of reccomendations
     # the method gives, so its set to as many games as possible, so we can filter out the
     # games the user actually owns.
-    recs = model.recommend(userid, user_plays, N=len(df['game'].cat.categories))
+    recs = model.recommend(user_id, user_plays, N=len(df['game'].cat.categories))
     # explain each recommendation
-    explanations = explain_recs(userid, gameplay_time, [rec for rec, *_ in recs], model, 4)
+    explanations = explain_recs(user_id, gameplay_time, [rec for rec, *_ in recs], model, 4)
     # convert from the matrix ids to the game ids as per steam
     recommendations = [(games[rec], [games[g] for g in expln]) for (rec, *_), expln in zip(recs, explanations)]
     return recommendations
+
 
 def load(filename):
     '''
@@ -54,17 +55,16 @@ def load(filename):
                         data['user'].cat.codes.copy())))
     return data, gameplay_time
 
-def explain_recs(userid, user_items, itemids, model, n):
+
+def explain_recs(user_id, user_items, item_ids, model, n):
     '''
-    This takes in a userid (based from the matrix), a sparse matrix (not csr) to generate
+    This takes in a user_id (based from the matrix), a sparse matrix (not csr) to generate
     the explanations from, a list of items/recommendations to explain, and the model itself.
     It then returns a list of n games per explanation.
     '''
-    explanations = []
     user_weights = None
-    for itemid in itemids:
-        # N is the number of items you put in the explanation. User weights can be reused
-        # between calls to speed it up
-        total_score, top_contributions, user_weights = model.explain(userid, user_items, itemid, user_weights, N=n)
-        explanations.append([t for t, *_ in top_contributions])
-    return explanations
+    for item_id in item_ids:
+        # N is the number of items you put in the explanation.
+        # User weights can be reused between calls to speed it up
+        _, top_contributions, user_weights = model.explain(user_id, user_items, item_id, user_weights, N=n)
+        yield [t for t, *_ in top_contributions]

@@ -7,6 +7,7 @@ import shutil
 
 _steam_id_re = re.compile('steamcommunity.com/openid/id/(.*?)$')
 
+
 @app.before_first_request
 def startup():
     # load from the file.
@@ -26,9 +27,11 @@ def startup():
     finally:
         print('loaded data')
 
+
 @app.before_request
 def before_request():
    g.shrek = get_random_shrek()
+
 
 @app.route('/')
 def index():
@@ -77,6 +80,7 @@ def index():
         session.pop('naive', None)
         return render_template('index.html')
 
+
 @app.route('/login')
 @oid.loginhandler
 def login():
@@ -91,9 +95,11 @@ def after_login(resp):
     g.user = session['user']
     return redirect('/')
 
+
 @app.route('/naive_landing')
 def naive_landing():
    return redirect
+
 
 @app.route('/logout')
 def logout():
@@ -102,6 +108,7 @@ def logout():
     session.pop('user', None)
     session.pop('naive', None)
     return redirect(oid.get_next_url())
+
 
 def get_random_shrek():
     shreks = list(filter(lambda f: f.endswith('.txt'), os.listdir('./app/shreks')))

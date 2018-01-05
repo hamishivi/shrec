@@ -105,3 +105,4 @@ ENV/
 /config.py
 training_data
 test.data
+.idea
