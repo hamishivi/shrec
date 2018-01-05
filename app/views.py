@@ -1,7 +1,7 @@
 import re
 from flask import render_template, g, flash, redirect, session
 from app import app, oid, user_info, game_info, rec
-from random import random
+import random 
 import os
 import shutil
 
@@ -110,9 +110,8 @@ def logout():
     return redirect(oid.get_next_url())
 
 
+SHREKS = [entry.path for entry in os.scandir('./app/shreks') if entry.name.endswith('.txt')]
+
 def get_random_shrek():
-    shreks = list(filter(lambda f: f.endswith('.txt'), os.listdir('./app/shreks')))
-    num = int(random()*len(shreks))
-    filename =shreks[num]
-    file = open('./app/shreks/' + filename)
-    return file.read()
+    with open(random.choice(SHREKS)) as shrek:
+        return shrek.read()
