@@ -27,7 +27,9 @@ window.addEventListener('load', () => {
 	}).fail(() => {
 		$('#description').text('something wen wrong')
 	}).always(() => {
-		$('.loader').addClass('d-none')
+		let loader = $('.loader')
+		loader.removeClass('loader')
+		loader.html('<button type="submit" class="btn btn-primary">Logout</button>')
 	})
 });
 </script>
