@@ -1,10 +1,35 @@
 {% include 'top.html' %}
-<body class="bg-dark text-white text-center">
-    <br><br>
-<h1>Shreccing out your backlog...</h1>
-<p><small> If this doesn't redirect automatically, go <a href="/">here</a></small></p>
+<div class="container">
+<h1 id="heading"></h1>
+<p id="description"></p>
+<div class="loader border-dark"></div>
 <script>
-window.location = "/";
+window.addEventListener('load', () => {
+	$('#heading').text('Shreccing out your backlog...')
+	$.ajax('/reccomendations/{{ session['user'] }}').done((html) => {
+		$('#description').text('here are your shreccommendations')
+		$('.container').append(html)
+		$('.game-info').each((index, elem) => {
+			let card = $(elem)
+			$.when(
+				$.ajax('/api/game-info/' + card.attr('steam-id'))
+				.done((game_info) => {
+					$('.game-title', elem).text(game_info['name'])
+					$('img', elem).attr('src', game_info['image'])
+					$('.game-desc', elem).text(game_info['description'])
+				}),
+				$.ajax('/api/game-names/' + card.attr('expln'))
+				.done((explanation) =>
+					$('.explanation', elem).text('Based on your time playing: ' + explanation)
+				)
+			).then(() => card.removeClass('d-none'))
+		})
+	}).fail(() => {
+		$('#description').text('something wen wrong')
+	}).always(() => {
+		$('.loader').addClass('d-none')
+	})
+});
 </script>
-</body>
+</div>
 {% include 'bottom.html' %}

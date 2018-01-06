@@ -1,31 +1,11 @@
 import re
-from flask import render_template, g, flash, redirect, session
-from app import app, oid, user_info, game_info, rec
-import random 
 import os
-import shutil
+import random
+from contextlib import suppress
+from flask import render_template, g, flash, redirect, session, jsonify
+from app import app, oid, user_info, game_info, rec
 
-_steam_id_re = re.compile('steamcommunity.com/openid/id/(.*?)$')
-
-
-@app.before_first_request
-def startup():
-    # load from the file.
-    global data, game_matrix
-    # try to load
-    try:
-        print('loading training data')
-        data, game_matrix = rec.load('./training_data')
-    # if something goes wrong, add a random user and then try again!
-    except Exception:
-        print('no data found, loading random user data')
-        u_info = user_info.get_user_data(76561198045011271) # user randomly chosen by human
-        friend_set = user_info.traverse_friend_graph(76561198045011271)
-        for i in friend_set:
-             user_info.get_user_data(i)
-        data, game_matrix = rec.load('./training_data')
-    finally:
-        print('loaded data')
+STEAM_ID_RE = re.compile('steamcommunity.com/openid/id/(.*?)$')
 
 
 @app.before_request
@@ -35,70 +15,47 @@ def before_request():
 
 @app.route('/')
 def index():
-    # if you've been logged in
-    if 'user' in session and session['user'] is not None:
-        # grab necessary data
-        unplayed_games = user_info.get_unplayed_games(session['user'])
-        data, game_matrix = rec.load('./training_data')
-        naive =  False
-        # we have already trawled this user, just give them their recs!
-        if (session['user'] in data['user'].cat.categories) or 'naive' in session:
-            # for when the user has seen naive recs already, grab their friends
-            if 'naive' in session:
-                session.pop('naive', None)
-                naive = False
-                # friend search
-                u_info = user_info.get_user_data(session['user'])
-                friend_set = user_info.traverse_friend_graph(session['user'])
-                for i in friend_set:
-                     user_info.get_user_data(i)
-                # reload data (as the above search writes straight to the csv)
-                data, game_matrix = rec.load('./training_data')
-
-            # grab recs and then filter and get explanations as needed
-            recs = rec.get_rec(int(session['user']), data, game_matrix)
-            games, expln = list(map(list, zip(*[(rec, ex) for rec, ex in recs if rec in unplayed_games])))
-        # give naive recommendations when there is nothing
-        elif 'naive' not in session or session['naive'] is None:
-            session['naive'] = True
-            naive = True
-            games = user_info.get_naive_recs(int(session['user']))
-            expln = None
-
-        games = games[:9]
-        game_infos = [game_info.fetch_game_info(id) for id in games]
-        # expln can be none when we give naive recommendations
-        expln_infos = None
-        if expln is not None:
-            expln = expln[:9]
-            expln_infos = [[game_info.fetch_game_name(id) for id in r] for r in expln]
-            # so it looks better on the page
-            expln_infos = [', '.join(games) for games in expln_infos]
-        # finally, return everything
-        return render_template('index.html', games=game_infos, naive=naive, expln=expln_infos)
+    if 'user' in session:
+        steam_id = session['user']
+        return render_template('loading.html')
     else:
-        session.pop('naive', None)
         return render_template('index.html')
 
+
+@app.route('/reccomendations/<int:steam_id>')
+def reccomendations(steam_id):
+    user_info.save_owned_games(steam_id)
+    for person in user_info.fetch_friend_network(steam_id):
+        with suppress(user_info.PrivateAccount):
+            user_info.save_owned_games(person)
+    recs = rec.get_rec(steam_id, *rec.load('./training_data'))
+    unplayed = user_info.filter_unplayed(user_info.fetch_owned_games(steam_id))
+    return render_template('reccomendations.html', rec=[
+            (game, expln) for game, expln in recs if game in unplayed
+    ][:9])
+
+@app.route('/api/game-info/<int:game_id>')
+def game_data(game_id):
+    return jsonify(game_info.fetch_game_info(game_id)._asdict())
+
+@app.route('/api/game-names/<games>')
+def game_names(games):
+    return ', '.join([game_info.fetch_game_name(app_id) for app_id in eval(games)])
 
 @app.route('/login')
 @oid.loginhandler
 def login():
-    if 'user' in g and g.user is not None:
+    if 'user' in g:
         return redirect(oid.get_next_url())
-    return oid.try_login(app.config['STEAM_API_URL'])
+    else:
+        return oid.try_login(app.config['STEAM_API_URL'])
 
 
 @oid.after_login
 def after_login(resp):
-    session['user'] = _steam_id_re.search(resp.identity_url).group(1)
+    session['user'] = STEAM_ID_RE.search(resp.identity_url).group(1)
     g.user = session['user']
     return redirect('/')
-
-
-@app.route('/naive_landing')
-def naive_landing():
-   return redirect
 
 
 @app.route('/logout')
