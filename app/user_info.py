@@ -45,6 +45,8 @@ def fetch_owned_games(steam_id):
     try:
         return cache.get(owned_games_url(steamid=steam_id)).json()['response']['games']
     except KeyError:
+        # invalidate cache so we make new request when user retry
+        cache.get.cache_clear()
         raise PrivateAccount(steam_id)
 
 def fetch_friends(steam_id):

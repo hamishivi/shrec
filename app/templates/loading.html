@@ -25,7 +25,13 @@ window.addEventListener('load', () => {
 			).then(() => card.removeClass('d-none'))
 		})
 	}).fail(() => {
-		$('#description').text('something wen wrong')
+		$('#heading').text('Oh No!')
+		$('#description').text('Looks like your account is private')
+		$('.container').append(`
+			<p>We need to see your play time to make a reccomendation.<br>
+			To make your profile public, go to<br>
+			steam profile > settings > privacy</p>
+		`)
 	}).always(() => {
 		let loader = $('.loader')
 		loader.removeClass('loader')
