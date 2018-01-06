@@ -29,7 +29,7 @@ window.addEventListener('load', () => {
 	}).always(() => {
 		let loader = $('.loader')
 		loader.removeClass('loader')
-		loader.html('<button type="submit" class="btn btn-primary">Logout</button>')
+		loader.html('<a href="/logout" class="btn btn-primary">Logout</a>')
 	})
 });
 </script>
