@@ -84,7 +84,7 @@ def find_removed_name(removed_apps : Sequence[dict], app_id : str):
     '''
     for game_data in removed_apps:
         if game_data['appid'] == app_id:
-            return app['name']
+            return game_data['name']
 
 
 def shorten_desc(description : str):
