@@ -10,10 +10,9 @@ def get_rec(username, df, gameplay_time):
     '''
     # create a model
     model = implicit.als.AlternatingLeastSquares()
-    user_id = None
     try:
         # get the user_id mapping from the sparse matrix
-        user_id = df['user'].cat.categories.tolist().index(username)
+        user_id = df['user'].cat.categories.tolist().index(int(username))
     except ValueError:
         return None
 

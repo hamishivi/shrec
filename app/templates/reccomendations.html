@@ -1,0 +1,18 @@
+{% for game, expln in rec %}
+	{% if loop.index%3 == 1 %}
+	<div class="card-deck">
+	{% endif %}
+	<div class="card text-secondary bg-light mb-3 game-info d-none" steam-id="{{ game }}" expln="{{ expln }}">
+			<img class="card-img-top img-thumbnail" width="20">
+			<div class="card-body">
+				<h5>Recommendation {{ loop.index }}:</h5><h3 class="card-title"><a class="text-success game-title" href="steam://rungameid/{{ game }}"></a></h3>
+				<blockquote class="blockquote text-left">
+					<p><small class="card-text game-desc"></small></p>
+					<p><small class="explanation"></small></p>
+				</blockquote>
+			</div>
+		</div>
+	{% if loop.index%3 == 0 %}
+	</div>
+	{% endif %}
+{% endfor %}

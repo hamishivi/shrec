@@ -1,120 +1,88 @@
-from app import cache
 import csv
 from urllib.parse import urljoin
-from app import app
+from functools import partial, lru_cache
+from app import app, cache
 
-def _steam_endpoint(endpoint, apikey=app.config['STEAM_API_KEY'], **params):
-    '''
-    Return a formatted endpoint URL from the Steam API
 
-    Warning: Will fail if no parameters are included in the endpoint
-    '''
-    url = [urljoin("http://api.steampowered.com/", endpoint)]
-
-    if apikey:
-        params["key"] = apikey
-    paramstring = "&".join([f"{k}={params[k]}" for k in params])
-    if paramstring:
-        url.append("?" + paramstring)
-    return cache.get(urljoin(*url))
-
-def get_naive_recs(steam_id, maxrec=5):
-    '''
-    Get recomendations using a naive non-machine-learning approach
-    '''
-    def get_game_data(appid):
-        BASE_URL = "http://store.steampowered.com/api/"
-        return cache.get(urljoin(BASE_URL, f"appdetails?appids={appid}"))
-
-    def get_genres(game):
-        return get_game_data(game['appid']).json()[str(game['appid'])]['data']['genres']
-
-    user_data = get_user_data_raw(steam_id)['response']
-    games = user_data['games']
-    games.sort(key=lambda x: x['playtime_forever'], reverse=True)
-
-    games_played = [i for i in games if i['playtime_forever'] > 0]
-    games_unplayed = [i for i in games if i['playtime_forever'] == 0]
-    games_top = [games[i] for i in range(min(maxrec, len(games_played)))]
-
-    try:
-        genres_top = set()
-        for game in games_top:
-            genres_top |= set(genre["id"] for genre in get_genres(game))
-
-        recs = []
-        for game in games_unplayed:
-            genres = set(genre['id'] for genre in get_genres(game))
-            if len(recs) > 5:
-                break
-
-            if genres_top & genres:
-                recs.append(game['appid'])
-        return recs
-    except Exception:
-        return games_top[:12]
-
-def get_user_data_raw(steam_id):
-    '''
-    returns json of user games
-    '''
-    req = _steam_endpoint('IPlayerService/GetOwnedGames/v0001', steamid=steam_id, format="json")
-    return req.json()
-
-def get_user_data(steam_id):
+@lru_cache(maxsize=128) # pevents repeated saves - should be replaced by db system
+def save_owned_games(steam_id):
     '''
     Create a csv file called training_data with the format: (steamid,gameid,play_time)
     '''
-    game_data = get_user_data_raw(steam_id)
-    played = filter_unplayed(game_data)
-    if played is None:
-        return
+    owned_games = fetch_owned_games(steam_id)
     with open('training_data','a') as f:
         writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        for i in game_data['response']['games']:
-            if i['playtime_forever'] > 0:
-                writer.writerow([steam_id, i['appid'], i['playtime_forever']])
+        for game in owned_games:
+            if game['playtime_forever'] > 0:
+                writer.writerow([steam_id, game['appid'], game['playtime_forever']])
 
-
-def get_unplayed_games(steam_id):
-    '''
-    gets all unplayed games from a certain user.
-    '''
-    return filter_unplayed(get_user_data_raw(steam_id))
 
 def filter_unplayed(game_data):
+    return [game['appid'] for game in game_data if game['playtime_forever'] == 0]
+
+
+@lru_cache(maxsize=128) # prevents crawling repeatedly
+def fetch_friend_network(steam_id, visited=frozenset(), depth=0, maxdepth=5, stop=50):
     '''
-    Filter out unplayed games from the data set
+    Constuct a recursive set of connections up to a certain depth and size
     '''
-    unplayed_games = []
-    try:
-        for i in game_data['response']['games']:
-            if i['playtime_forever'] == 0:
-                unplayed_games.append(i['appid'])
-        return unplayed_games
-    except KeyError:
-        pass
-
-def traverse_friend_graph(steam_id, cap=50, maxdepth=4, visited=set(), depth=0):
-    """Get a recursive list of connections up to a certain depth and number"""
-
-    def get_friends(steam_id):
-        """Get a list of friends for a steam user"""
-        req = _steam_endpoint('ISteamUser/GetFriendList/v0001',
-                              steamid=steam_id, relationship='friend')
-        friends = req.json()
-        try:
-            return friends['friendslist']['friends']
-        except KeyError:
-            return []
-
-    if len(visited) >= cap or depth >= maxdepth:
+    if len(visited) >= stop or depth >= maxdepth:
         return visited
 
-    visited.add(steam_id)
-    for i in get_friends(steam_id):
-        if i['steamid'] in visited:
+    visited |= {steam_id}
+    for friend in fetch_friends(steam_id):
+        friend_id = friend['steamid']
+        if friend_id in visited:
             continue
-        visited |= traverse_friend_graph(i['steamid'], cap=cap, maxdepth=maxdepth,
-                                         visited=visited, depth=depth+1)
+        visited |= fetch_friend_network(friend_id, visited, depth+1)
     return visited
+
+
+def fetch_owned_games(steam_id):
+    '''
+    returns json of user games
+    '''
+    try:
+        return cache.get(owned_games_url(steamid=steam_id)).json()['response']['games']
+    except KeyError:
+        raise PrivateAccount(steam_id)
+
+def fetch_friends(steam_id):
+    '''
+    Get a list of friends for a steam user
+    '''
+    try:
+        return cache.get(friend_list_url(steamid=steam_id)).json()['friendslist']['friends']
+    except KeyError:
+        return []
+
+
+def construct_steam_url(endpoint, apikey=app.config['STEAM_API_KEY'], **params):
+    '''
+    Return a formatted endpoint URL from the Steam API
+    '''
+    params["key"] = apikey
+    return urljoin(
+        urljoin("http://api.steampowered.com/", endpoint),
+        "?" + "&".join([f"{k}={params[k]}" for k in params])
+    )
+
+
+# usage: owned_games_url(steamid=0000000)
+owned_games_url = partial(
+        construct_steam_url,
+        endpoint='IPlayerService/GetOwnedGames/v0001',
+        apikey=app.config['STEAM_API_KEY'],
+        format='json'
+)
+
+
+# usage: friend_list_url(steamid=0000000)
+friend_list_url = partial(
+        construct_steam_url,
+        endpoint='ISteamUser/GetFriendList/v0001',
+        apikey=app.config['STEAM_API_KEY'],
+        relationsip='friend'
+)
+
+class PrivateAccount(Exception): pass
