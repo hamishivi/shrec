@@ -22,19 +22,19 @@ def filter_unplayed(game_data):
 
 
 @lru_cache(maxsize=128) # prevents crawling repeatedly
-def fetch_friend_network(steam_id, visited=frozenset(), depth=0, maxdepth=5, stop=50):
+def fetch_friend_network(steam_id, maxdepth=5, stop=50):
     '''
     Constuct a recursive set of connections up to a certain depth and size
     '''
-    if len(visited) >= stop or depth >= maxdepth:
-        return visited
-
-    visited |= {steam_id}
-    for friend in fetch_friends(steam_id):
-        friend_id = friend['steamid']
-        if friend_id in visited:
+    visited = {}
+    stack = [(steam_id, 0)]
+    while stack and len(visited) < stop:
+        steam_id, depth = stack.pop()
+        if depth > maxdepth or steam_id in visited:
             continue
-        visited |= fetch_friend_network(friend_id, visited, depth+1)
+        visited.add(steam_id)
+        for friend in fetch_friends(steam_id):
+            stack.append((friend['steamid'], depth + 1))
     return visited
 
 
