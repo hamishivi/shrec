@@ -8,7 +8,7 @@ idna==2.6
 itsdangerous==0.24
 Jinja2>=2.10.1
 MarkupSafe==1.0
-numpy==1.13.1
+numpy==1.21.0
 py4j==0.10.4
 implicit==0.2.7
 python3-openid==3.1.0
